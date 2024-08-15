@@ -1,8 +1,10 @@
 let prevUrl = null;
 const logic = async () => {
     const video = document.querySelector("video"); //비디오 가져오기
-    if (!video) return;
-
+    if (!video || !video.getBoundingClientRect().width) {
+        prevUrl = null;
+        return;
+    }
     //캔버스 생성하기
     removeExistingCanvas(); //기존 캔버스 삭제
     const canvas = createCanvas(video); //새로운 캔버스 생성
@@ -27,9 +29,13 @@ const logic = async () => {
             commentPositions
         );
     };
+    // video.addEventListener("loadedmetadata", handleSizeChange);
     observeVideoSizeChanges(video, handleSizeChange);
 
     const renderFrame = () => {
+        const videoId = extractVideoId(window.location.href);
+        if (!videoId) return;
+
         clearCanvas(context, canvas);
         commentPositions = updateTextPositionsBasedOnTime(
             video,
@@ -43,9 +49,9 @@ const logic = async () => {
 
 // 비디오 사이즈 변경 핸들러
 const handleVideoSizeChanges = (canvas, video, comments) => {
-    const prevCanvasWidth = canvas.width;
+    const prevWidth = canvas.width;
     updateCanvasSize(canvas, video);
-    const scale = canvas.width / (prevCanvasWidth || 1);
+    const scale = canvas.width / (prevWidth || 1);
     return resizeTextPositions(comments, scale);
 };
 //기존 캔버스 삭제
@@ -95,7 +101,7 @@ const createCommentPositions = (canvas, comments) =>
         x: canvas.width + index * (canvas.width / comments.length),
         y: Math.random() * (canvas.height - 40) + 40,
         random: Math.random() * 0.2,
-        fontSize: 18,
+        fontSize: 24,
     }));
 
 const updateTextPositionsBasedOnTime = (video, comments) =>
@@ -147,7 +153,6 @@ const fetchComments = async (videoId) => {
 
 const setupUrlChangeListener = () => {
     window.addEventListener("popstate", logic);
-    console.log(prevUrl, window.location.href);
     setInterval(() => {
         if (prevUrl !== window.location.href) {
             prevUrl = window.location.href;
