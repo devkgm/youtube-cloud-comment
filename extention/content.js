@@ -6,6 +6,12 @@ let inputSpeed = 1;
 let inputFontSize = 1;
 let nextPageToken = null;
 
+chrome.storage.sync.get(["speed", "fontSize"], (result) => {
+    console.log(result);
+    inputSpeed = result.speed !== undefined ? result.speed / 10 : 1;
+    inputFontSize = result.fontSize !== undefined ? result.fontSize / 10 : 1;
+});
+
 const logic = async () => {
     const video = document.querySelector("video"); //비디오 가져오기
     if (!video || !video.getBoundingClientRect().width) {
@@ -168,7 +174,10 @@ const updateTextPositionsBasedOnTime = (video, comments) =>
             ...comment,
             x:
                 (video.getBoundingClientRect().width - timeOffset) *
-                (speed * inputSpeed + comment.random),
+                    (speed * inputSpeed + comment.random) +
+                (comment.time === null
+                    ? 0
+                    : video.getBoundingClientRect().width),
             fontSize: comment.fontSize,
         };
     });
@@ -200,11 +209,14 @@ const fetchComments = async (videoId, nextPageToken) => {
         order: "relevance",
     };
     if (nextPageToken) params.pageToken = nextPageToken;
-    const response = await fetch("http://localhost:8080/api/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-    });
+    const response = await fetch(
+        "https://cm3zyqdaz6.execute-api.ap-northeast-2.amazonaws.com/v1/comments",
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(params),
+        }
+    );
     return response.json();
 };
 
