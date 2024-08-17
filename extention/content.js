@@ -1,5 +1,7 @@
 let prevUrl = null;
 let play = JSON.parse(localStorage.getItem("ytp-cloud-comment-toggle"));
+let durationPerComment = 1;
+let nextPageToken = null;
 const logic = async () => {
     const video = document.querySelector("video"); //비디오 가져오기
     if (!video || !video.getBoundingClientRect().width) {
@@ -17,6 +19,7 @@ const logic = async () => {
 
     //댓글 위치 생성
     const data = await fetchComments(videoId);
+    nextPageToken = data.nextPageToken;
     const comments = data.items.map(
         (comment) => comment.snippet.topLevelComment.snippet.textOriginal
     );
@@ -32,20 +35,46 @@ const logic = async () => {
     };
     // video.addEventListener("loadedmetadata", handleSizeChange);
     observeVideoSizeChanges(video, handleSizeChange);
-
+    let isLoading = false;
     const renderFrame = () => {
         const videoId = extractVideoId(window.location.href);
         if (!videoId) return;
 
-        clearCanvas(context, canvas);
+        if (play && !video.paused) {
+            clearCanvas(context, canvas);
 
-        if (play) {
             commentPositions = updateTextPositionsBasedOnTime(
                 video,
                 commentPositions
             );
             renderComments(context, commentPositions);
+            if (
+                video.currentTime + 5 >
+                durationPerComment * commentPositions.length
+            ) {
+                if (nextPageToken && !isLoading) {
+                    isLoading = true;
+                    fetchComments(videoId, nextPageToken).then((data) => {
+                        nextPageToken = data.nextPageToken;
+                        const comments = data.items.map(
+                            (comment) =>
+                                comment.snippet.topLevelComment.snippet
+                                    .textOriginal
+                        );
+                        commentPositions = [
+                            ...commentPositions,
+                            ...createCommentPositions(
+                                canvas,
+                                comments,
+                                commentPositions.length / 100
+                            ),
+                        ];
+                        isLoading = false;
+                    });
+                }
+            }
         }
+        if (video.currentTime === video.duration) clearCanvas(context, canvas);
         requestAnimationFrame(renderFrame);
     };
     requestAnimationFrame(renderFrame);
@@ -98,11 +127,17 @@ const observeVideoSizeChanges = (video, callback) => {
     const resizeObserver = new ResizeObserver(callback);
     resizeObserver.observe(video);
 };
+const observeVideo = (video, callback) => {
+    const mutationObserver = new MutationObserver(callback);
+    mutationObserver.observe(video);
+};
 
-const createCommentPositions = (canvas, comments) =>
+const createCommentPositions = (canvas, comments, page = 0) =>
     comments.map((comment, index) => ({
         text: comment,
-        x: canvas.width + index * (canvas.width / comments.length),
+        x:
+            canvas.width +
+            (index + page * 100) * (canvas.width / comments.length),
         y: Math.random() * (canvas.height - 40) + 40,
         random: Math.random() * 0.2,
         fontSize: 24,
@@ -114,8 +149,6 @@ const createCommentPositions = (canvas, comments) =>
 
 const updateTextPositionsBasedOnTime = (video, comments) =>
     comments.map((comment, index) => {
-        let durationPerComment = video.duration / comments.length;
-        durationPerComment = 1;
         if (comment.time) {
             index = comment.time / durationPerComment;
         }
@@ -150,16 +183,18 @@ const extractVideoId = (url) => {
     return match ? match[1] : null;
 };
 
-const fetchComments = async (videoId) => {
+const fetchComments = async (videoId, nextPageToken) => {
+    const params = {
+        part: "snippet",
+        videoId,
+        maxResults: 100,
+        order: "relevance",
+    };
+    if (nextPageToken) params.pageToken = nextPageToken;
     const response = await fetch("http://localhost:8080/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            part: "snippet",
-            videoId,
-            maxResults: 100,
-            order: "relevance",
-        }),
+        body: JSON.stringify(params),
     });
     return response.json();
 };
@@ -224,7 +259,6 @@ function extractAndConvertTimes(text) {
     const timeRegex = /\b(\d{1,2}:\d{2}(?::\d{2})?)\b/g;
     const matches = text.match(timeRegex);
     if (matches) {
-        console.log(matches);
         return convertTimeToSeconds(matches[0]);
     } else {
         return [];
