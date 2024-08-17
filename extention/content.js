@@ -7,7 +7,6 @@ let inputFontSize = 1;
 let nextPageToken = null;
 
 chrome.storage.sync.get(["speed", "fontSize"], (result) => {
-    console.log(result);
     inputSpeed = result.speed !== undefined ? result.speed / 10 : 1;
     inputFontSize = result.fontSize !== undefined ? result.fontSize / 10 : 1;
 });
@@ -145,21 +144,44 @@ const observeVideo = (video, callback) => {
     const mutationObserver = new MutationObserver(callback);
     mutationObserver.observe(video);
 };
-
-const createCommentPositions = (canvas, comments, page = 0) =>
-    comments.map((comment, index) => ({
-        text: comment,
-        x:
-            canvas.width +
-            (index + page * 100) * (canvas.width / comments.length),
-        y: Math.random() * (canvas.height - 40) + 40,
-        random: Math.random() * 0.2,
-        fontSize: 36 / (1920 / canvas.width),
-        time:
-            extractAndConvertTimes(comment).length === 0
-                ? null
-                : extractAndConvertTimes(comment),
-    }));
+const createUnOverlapNumbers = (min, max) => {
+    const arr = [];
+    while (1) {
+        const randomNumber = Math.floor(Math.random() * max + min);
+        if (!arr.includes(randomNumber)) {
+            arr.push(randomNumber);
+            if (arr.length === max - min) return arr;
+        }
+    }
+};
+const createCommentPositions = (canvas, comments, page = 0) => {
+    const fontSize = 36 / (1920 / canvas.width);
+    const positions = [];
+    const min = 2;
+    const max = Math.floor(canvas.height / (fontSize * inputFontSize) - 2);
+    let randomNumbers = null;
+    comments.forEach((comment, index) => {
+        if (index % max === 0) {
+            randomNumbers = createUnOverlapNumbers(min, max);
+        }
+        positions.push({
+            text: comment,
+            x:
+                canvas.width +
+                (index + page * 100) * (canvas.width / comments.length),
+            y:
+                randomNumbers[index % max] * fontSize * inputFontSize -
+                fontSize * inputFontSize,
+            random: Math.random() * 0.2,
+            fontSize: fontSize,
+            time:
+                extractAndConvertTimes(comment).length === 0
+                    ? null
+                    : extractAndConvertTimes(comment),
+        });
+    });
+    return positions;
+};
 
 const updateTextPositionsBasedOnTime = (video, comments) =>
     comments.map((comment, index) => {
@@ -305,5 +327,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "fontSizeChange") {
         inputFontSize = message.data / 10;
     }
-    console.log(inputSpeed, inputFontSize);
 });
