@@ -38,11 +38,14 @@ const logic = async () => {
         if (!videoId) return;
 
         clearCanvas(context, canvas);
-        commentPositions = updateTextPositionsBasedOnTime(
-            video,
-            commentPositions
-        );
-        if (play) renderComments(context, commentPositions);
+
+        if (play) {
+            commentPositions = updateTextPositionsBasedOnTime(
+                video,
+                commentPositions
+            );
+            renderComments(context, commentPositions);
+        }
         requestAnimationFrame(renderFrame);
     };
     requestAnimationFrame(renderFrame);
@@ -103,13 +106,22 @@ const createCommentPositions = (canvas, comments) =>
         y: Math.random() * (canvas.height - 40) + 40,
         random: Math.random() * 0.2,
         fontSize: 24,
+        time:
+            extractAndConvertTimes(comment).length === 0
+                ? null
+                : extractAndConvertTimes(comment),
     }));
 
 const updateTextPositionsBasedOnTime = (video, comments) =>
     comments.map((comment, index) => {
+        let durationPerComment = video.duration / comments.length;
+        durationPerComment = 1;
+        if (comment.time) {
+            index = comment.time / durationPerComment;
+        }
         const timeOffset =
-            ((video.currentTime - index * (video.duration / comments.length)) /
-                (video.duration / comments.length)) *
+            ((video.currentTime - index * durationPerComment) /
+                durationPerComment) *
             video.getBoundingClientRect().width;
         return {
             ...comment,
@@ -154,7 +166,6 @@ const fetchComments = async (videoId) => {
 
 // 버튼 추가
 (function () {
-    // Wait for the YouTube player to load
     function addButton() {
         const player = document.querySelector(".ytp-right-controls");
 
@@ -185,15 +196,40 @@ const fetchComments = async (videoId) => {
                 localStorage.setItem("ytp-cloud-comment-toggle", play);
             });
         } else {
-            // Retry if the player is not yet loaded
             setTimeout(addButton, 1000);
         }
     }
 
-    // Run the function to add the button
     addButton();
 })();
 
+function convertTimeToSeconds(timeStr) {
+    const timeParts = timeStr.split(":").map(Number);
+    let seconds = 0;
+
+    if (timeParts.length === 2) {
+        // 분:초 형식
+        const [minutes, secondsPart] = timeParts;
+        seconds = minutes * 60 + secondsPart;
+    } else if (timeParts.length === 3) {
+        // 시간:분:초 형식
+        const [hours, minutes, secondsPart] = timeParts;
+        seconds = hours * 3600 + minutes * 60 + secondsPart;
+    }
+
+    return seconds;
+}
+
+function extractAndConvertTimes(text) {
+    const timeRegex = /\b(\d{1,2}:\d{2}(?::\d{2})?)\b/g;
+    const matches = text.match(timeRegex);
+    if (matches) {
+        console.log(matches);
+        return convertTimeToSeconds(matches[0]);
+    } else {
+        return [];
+    }
+}
 const setupUrlChangeListener = () => {
     window.addEventListener("popstate", logic);
     setInterval(() => {
