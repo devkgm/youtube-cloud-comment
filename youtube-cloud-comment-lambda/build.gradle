@@ -1,0 +1,59 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('software.amazon.awssdk:bom:2.10.72')
+    implementation platform('com.amazonaws:aws-xray-recorder-sdk-bom:2.4.0')
+    implementation 'software.amazon.awssdk:lambda'
+    implementation 'com.amazonaws:aws-xray-recorder-sdk-core'
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.1'
+    implementation 'com.amazonaws:aws-lambda-java-events:2.2.9'
+    implementation 'org.slf4j:slf4j-nop:2.0.6'
+    testImplementation 'com.amazonaws:aws-lambda-java-tests:1.1.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+
+    implementation 'com.google.api-client:google-api-client:1.33.0'
+    implementation 'com.google.oauth-client:google-oauth-client-jetty:1.23.0'
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev20230816-2.0.0'
+    implementation 'com.google.http-client:google-http-client-jackson2:1.39.2'
+}
+
+test {
+//    useJUnitPlatform()
+}
+
+task packageFat(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+    dirMode = 0755
+    fileMode = 0755
+}
+
+task packageLibs(type: Zip) {
+    into('java/lib') {
+        from configurations.runtimeClasspath
+    }
+    dirMode = 0755
+    fileMode = 0755
+}
+
+task packageSkinny(type: Zip) {
+    from compileJava
+    from processResources
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+build.dependsOn packageSkinny
