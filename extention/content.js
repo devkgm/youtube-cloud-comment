@@ -74,7 +74,11 @@ const logic = async () => {
                 }
             }
         }
-        if (video.currentTime === video.duration) clearCanvas(context, canvas);
+        if (
+            Math.floor(video.currentTime) == Math.floor(video.duration) ||
+            !play
+        )
+            clearCanvas(context, canvas);
         requestAnimationFrame(renderFrame);
     };
     requestAnimationFrame(renderFrame);
@@ -140,7 +144,7 @@ const createCommentPositions = (canvas, comments, page = 0) =>
             (index + page * 100) * (canvas.width / comments.length),
         y: Math.random() * (canvas.height - 40) + 40,
         random: Math.random() * 0.2,
-        fontSize: 24,
+        fontSize: 36 / (1920 / canvas.width),
         time:
             extractAndConvertTimes(comment).length === 0
                 ? null
