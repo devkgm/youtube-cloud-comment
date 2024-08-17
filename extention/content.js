@@ -1,7 +1,11 @@
 let prevUrl = null;
 let play = JSON.parse(localStorage.getItem("ytp-cloud-comment-toggle"));
-let durationPerComment = 1;
+const durationPerComment = 1;
+const speed = 0.2;
+let inputSpeed = 1;
+let inputFontSize = 1;
 let nextPageToken = null;
+
 const logic = async () => {
     const video = document.querySelector("video"); //비디오 가져오기
     if (!video || !video.getBoundingClientRect().width) {
@@ -164,14 +168,15 @@ const updateTextPositionsBasedOnTime = (video, comments) =>
             ...comment,
             x:
                 (video.getBoundingClientRect().width - timeOffset) *
-                (0.2 + comment.random),
+                (speed * inputSpeed + comment.random),
+            fontSize: comment.fontSize,
         };
     });
 
 //댓글 렌더링
 const renderComments = (ctx, comments) =>
     comments.forEach((comment) => {
-        ctx.font = `${comment.fontSize}px Arial`;
+        ctx.font = `${comment.fontSize * inputFontSize}px Arial`;
         ctx.fillStyle = "black";
         ctx.shadowColor = "white";
         ctx.shadowBlur = 4;
@@ -279,3 +284,14 @@ const setupUrlChangeListener = () => {
 };
 
 setupUrlChangeListener();
+
+//popup 이벤트리스너
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === "speedChange") {
+        inputSpeed = message.data / 10;
+    }
+    if (message.type === "fontSizeChange") {
+        inputFontSize = message.data / 10;
+    }
+    console.log(inputSpeed, inputFontSize);
+});

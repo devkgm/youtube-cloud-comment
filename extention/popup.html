@@ -1,18 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-        <title>My Extension</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Youtube Cloud Comment</title>
         <style>
             body {
                 width: 300px;
-                height: 200px;
+                height: 250px;
                 margin: 0;
-                padding: 10px;
+                padding: 20px;
                 font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-around;
+                align-items: center;
+            }
+
+            .control-group {
+                width: 100%;
+                margin-bottom: 15px;
+            }
+
+            .control-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+                color: #333;
+            }
+
+            .control-group input[type="range"] {
+                width: 100%;
+                -webkit-appearance: none;
+                appearance: none;
+                background: #ddd;
+                height: 5px;
+                border-radius: 5px;
+                outline: none;
+            }
+
+            .control-group input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 15px;
+                height: 15px;
+                background: #4caf50;
+                cursor: pointer;
+                border-radius: 50%;
+            }
+
+            .control-group input[type="range"]::-moz-range-thumb {
+                width: 15px;
+                height: 15px;
+                background: #4caf50;
+                cursor: pointer;
+                border-radius: 50%;
+            }
+
+            .control-group input[type="range"]::-ms-thumb {
+                width: 15px;
+                height: 15px;
+                background: #4caf50;
+                cursor: pointer;
+                border-radius: 50%;
+            }
+
+            #resetButton {
+                background-color: #f44336; /* Red */
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 14px;
+                margin-top: 10px;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #resetButton:hover {
+                background-color: #d32f2f;
             }
         </style>
     </head>
     <body>
+        <div class="control-group">
+            <label for="speedInput">속도(Speed)</label>
+            <input type="range" min="1" max="20" value="10" id="speedInput" />
+        </div>
+        <div class="control-group">
+            <label for="fontSizeInput">글자 크기(Font Size)</label>
+            <input
+                type="range"
+                min="1"
+                max="20"
+                value="10"
+                id="fontSizeInput"
+            />
+        </div>
+        <button id="resetButton">초기화</button>
         <script src="popup.js"></script>
     </body>
 </html>
