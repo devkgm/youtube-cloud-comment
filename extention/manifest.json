@@ -4,9 +4,6 @@
     "version": "1.0",
     "description": "Youtube Cloud Comment",
     "permissions": ["scripting", "webRequest", "storage"],
-    // "background": {
-    //     "service_worker": "background.js"
-    // },
     "action": {
         "default_popup": "popup.html"
     },
