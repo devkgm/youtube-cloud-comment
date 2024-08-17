@@ -1,4 +1,5 @@
 let prevUrl = null;
+let play = JSON.parse(localStorage.getItem("ytp-cloud-comment-toggle"));
 const logic = async () => {
     const video = document.querySelector("video"); //비디오 가져오기
     if (!video || !video.getBoundingClientRect().width) {
@@ -41,7 +42,7 @@ const logic = async () => {
             video,
             commentPositions
         );
-        renderComments(context, commentPositions);
+        if (play) renderComments(context, commentPositions);
         requestAnimationFrame(renderFrame);
     };
     requestAnimationFrame(renderFrame);
@@ -150,6 +151,48 @@ const fetchComments = async (videoId) => {
     });
     return response.json();
 };
+
+// 버튼 추가
+(function () {
+    // Wait for the YouTube player to load
+    function addButton() {
+        const player = document.querySelector(".ytp-right-controls");
+
+        if (player) {
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = `
+                <button class="ytp-button" data-tooltip-target-id="ytp-autonav-toggle-button" style="" aria-label="자동재생 사용 중지" title="자동재생 사용 중지">
+                    <div class="ytp-autonav-toggle-button-container">
+                        <div class="ytp-autonav-toggle-button" aria-checked="false">
+                        </div>
+                    </div>
+                </button>`;
+            const buttonElement = tempDiv.firstElementChild;
+            player.insertAdjacentElement("afterbegin", buttonElement);
+
+            const toggle = buttonElement.getElementsByClassName(
+                "ytp-autonav-toggle-button"
+            )[0];
+            if (!play) {
+                localStorage.setItem("ytp-cloud-comment-toggle", true);
+                play = true;
+            }
+            toggle.ariaChecked = play === true ? "true" : "false";
+            buttonElement.addEventListener("click", () => {
+                toggle.ariaChecked =
+                    toggle.ariaChecked === "true" ? "false" : "true";
+                play = toggle.ariaChecked === "true" ? true : false;
+                localStorage.setItem("ytp-cloud-comment-toggle", play);
+            });
+        } else {
+            // Retry if the player is not yet loaded
+            setTimeout(addButton, 1000);
+        }
+    }
+
+    // Run the function to add the button
+    addButton();
+})();
 
 const setupUrlChangeListener = () => {
     window.addEventListener("popstate", logic);
