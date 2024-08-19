@@ -8,13 +8,12 @@ const defaultFontSize = 10;
 const defaultSyncSpeed = false;
 
 // 설정값을 로드하여 슬라이더에 적용
-chrome.storage.sync.get(["speed", "fontSize", "syncSpeed"], (result) => {
+chrome.storage.sync.get(["speed", "fontSize", "speedSync"], (result) => {
     speedInput.value = result.speed !== undefined ? result.speed : defaultSpeed;
     fontSizeInput.value =
         result.fontSize !== undefined ? result.fontSize : defaultFontSize;
-    syncSpeed.value =
-        result.syncSpeed !== undefined ? result.syncSpeed : defaultSyncSpeed;
-
+    speedSyncToggle.checked =
+        result.speedSync !== undefined ? result.speedSync : defaultSyncSpeed;
     sendMessage({
         type: "speedChange",
         data: speedInput.value,
@@ -24,8 +23,8 @@ chrome.storage.sync.get(["speed", "fontSize", "syncSpeed"], (result) => {
         data: fontSizeInput.value,
     });
     sendMessage({
-        type: "syncSpeedChange",
-        data: fontSizeInput.value,
+        type: "speedSyncChange",
+        data: speedSyncToggle.checked,
     });
 });
 
@@ -51,7 +50,7 @@ speedSyncToggle.addEventListener("input", (e) => {
     const speedSyncValue = e.target.checked;
     chrome.storage.sync.set({ speedSync: speedSyncValue });
     sendMessage({
-        type: "syncSpeedChange",
+        type: "speedSyncChange",
         data: speedSyncValue,
     });
 });
@@ -60,8 +59,13 @@ speedSyncToggle.addEventListener("input", (e) => {
 resetButton.addEventListener("click", () => {
     speedInput.value = defaultSpeed;
     fontSizeInput.value = defaultFontSize;
+    speedSyncToggle.checked = defaultSyncSpeed;
 
-    chrome.storage.sync.set({ speed: defaultSpeed, fontSize: defaultFontSize });
+    chrome.storage.sync.set({
+        speed: defaultSpeed,
+        fontSize: defaultFontSize,
+        speedSync: defaultSyncSpeed,
+    });
 
     sendMessage({
         type: "speedChange",
@@ -70,6 +74,11 @@ resetButton.addEventListener("click", () => {
     sendMessage({
         type: "fontSizeChange",
         data: defaultFontSize,
+    });
+
+    sendMessage({
+        type: "speedSyncChange",
+        data: defaultSyncSpeed,
     });
 });
 
