@@ -4,11 +4,13 @@ const durationPerComment = 1;
 const speed = 0.2;
 let inputSpeed = 1;
 let inputFontSize = 1;
+let syncSpeed = false;
 let nextPageToken = null;
 
-chrome.storage.sync.get(["speed", "fontSize"], (result) => {
+chrome.storage.sync.get(["speed", "fontSize", "syncSpeed"], (result) => {
     inputSpeed = result.speed !== undefined ? result.speed / 10 : 1;
     inputFontSize = result.fontSize !== undefined ? result.fontSize / 10 : 1;
+    syncSpeed = result.syncSpeed !== undefined ? result.syncSpeed : false;
 });
 
 const logic = async () => {
@@ -200,7 +202,7 @@ const updateTextPositionsBasedOnTime = (video, comments) =>
             ...comment,
             x:
                 (video.getBoundingClientRect().width - timeOffset) *
-                    (speed * inputSpeed + comment.random) +
+                    (speed * inputSpeed + !syncSpeed * comment.random) +
                 (comment.time === null
                     ? 0
                     : video.getBoundingClientRect().width),
@@ -330,6 +332,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (message.type === "fontSizeChange") {
         inputFontSize = message.data / 10;
+    }
+    if (message.type === "syncSpeedChange") {
+        syncSpeed = message.data;
     }
 });
 

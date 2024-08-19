@@ -1,15 +1,19 @@
 const speedInput = document.getElementById("speedInput");
 const fontSizeInput = document.getElementById("fontSizeInput");
 const resetButton = document.getElementById("resetButton");
+const speedSyncToggle = document.getElementById("speedSyncToggle");
 
 const defaultSpeed = 10;
 const defaultFontSize = 10;
+const defaultSyncSpeed = false;
 
 // 설정값을 로드하여 슬라이더에 적용
-chrome.storage.sync.get(["speed", "fontSize"], (result) => {
+chrome.storage.sync.get(["speed", "fontSize", "syncSpeed"], (result) => {
     speedInput.value = result.speed !== undefined ? result.speed : defaultSpeed;
     fontSizeInput.value =
         result.fontSize !== undefined ? result.fontSize : defaultFontSize;
+    syncSpeed.value =
+        result.syncSpeed !== undefined ? result.syncSpeed : defaultSyncSpeed;
 
     sendMessage({
         type: "speedChange",
@@ -17,6 +21,10 @@ chrome.storage.sync.get(["speed", "fontSize"], (result) => {
     });
     sendMessage({
         type: "fontSizeChange",
+        data: fontSizeInput.value,
+    });
+    sendMessage({
+        type: "syncSpeedChange",
         data: fontSizeInput.value,
     });
 });
@@ -37,6 +45,14 @@ fontSizeInput.addEventListener("input", (e) => {
     sendMessage({
         type: "fontSizeChange",
         data: fontSizeValue,
+    });
+});
+speedSyncToggle.addEventListener("input", (e) => {
+    const speedSyncValue = e.target.checked;
+    chrome.storage.sync.set({ speedSync: speedSyncValue });
+    sendMessage({
+        type: "syncSpeedChange",
+        data: speedSyncValue,
     });
 });
 
