@@ -17,3 +17,7 @@ Google Cloud YouTube Data API를 통해 댓글을 불러옵니다.<br>
 
 ### 설정 값 조절
 <img width="294" alt="스크린샷 2024-08-18 00 09 41" src="https://github.com/user-attachments/assets/d9bf7402-c80f-4220-9cf7-96016e8febd1">
+
+## 설치
+크롬 웹 스토어
+https://chromewebstore.google.com/detail/youtube-cloud-comment/jdngjadbbojfhmlkmdkkgljhgbkcimfn?hl=ko&utm_source=ext_sidebar
