@@ -49,7 +49,10 @@ const logic = async () => {
         const videoId = extractVideoId(window.location.href);
         if (!videoId) return;
 
-        if (play && !video.paused) {
+        if (video.getBoundingClientRect().width != canvas.width)
+            updateCanvasSize(canvas, video);
+
+        if (play && !video.paused && !checkAds()) {
             clearCanvas(context, canvas);
 
             commentPositions = updateTextPositionsBasedOnTime(
@@ -85,7 +88,8 @@ const logic = async () => {
         }
         if (
             Math.floor(video.currentTime) == Math.floor(video.duration) ||
-            !play
+            !play ||
+            checkAds()
         )
             clearCanvas(context, canvas);
         requestAnimationFrame(renderFrame);
@@ -328,3 +332,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         inputFontSize = message.data / 10;
     }
 });
+
+const checkAds = () => {
+    const videoPlayer = document.querySelector(".html5-main-video");
+    // 광고가 재생 중인지 확인하는 방법
+    if (videoPlayer && videoPlayer.closest(".ad-showing")) {
+        return true;
+    } else {
+        return false;
+    }
+};
