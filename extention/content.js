@@ -2,15 +2,32 @@ let prevUrl = null;
 let play = JSON.parse(localStorage.getItem("ytp-cloud-comment-toggle"));
 const durationPerComment = 1;
 const speed = 0.2;
-let inputSpeed = 1;
-let inputFontSize = 1;
-let speedSync = false;
+let options = {
+    speed: 1,
+    fontSize: 1,
+    speedSync: false,
+    fontColor: "#000000",
+    backgroundColor: "#ffffff",
+};
 let nextPageToken = null;
 
-chrome.storage.sync.get(["speed", "fontSize", "speedSync"], (result) => {
-    inputSpeed = result.speed !== undefined ? result.speed / 10 : 1;
-    inputFontSize = result.fontSize !== undefined ? result.fontSize / 10 : 1;
-    speedSync = result.speedSync !== undefined ? result.speedSync : false;
+chrome.storage.sync.get(["options"], (result) => {
+    options.speed =
+        result.options.speed !== undefined ? result.options.speed : 1;
+    options.fontSize =
+        result.options.fontSize !== undefined ? result.options.fontSize : 1;
+    options.speedSync =
+        result.options.speedSync !== undefined
+            ? result.options.speedSync
+            : false;
+    options.fontColor =
+        result.options.fontColor !== undefined
+            ? result.options.fontColor
+            : "#000000";
+    options.backgroundColor =
+        result.options.backgroundColor !== undefined
+            ? result.options.backgroundColor
+            : "#ffffff";
 });
 
 const logic = async () => {
@@ -52,7 +69,7 @@ const logic = async () => {
         if (!videoId) return;
 
         if (video.getBoundingClientRect().width != canvas.width)
-            updateCanvasSize(canvas, video);
+            handleSizeChange();
 
         if (play && !video.paused && !checkAds()) {
             clearCanvas(context, canvas);
@@ -164,7 +181,9 @@ const createCommentPositions = (canvas, comments, page = 0) => {
     const fontSize = 36 / (1920 / canvas.width);
     const positions = [];
     const min = 2;
-    const max = Math.floor(canvas.height / (fontSize * inputFontSize) - 2);
+    const max = Math.floor(
+        canvas.height / ((fontSize * options.fontSize) / 10) - 2
+    );
     let randomNumbers = null;
     comments.forEach((comment, index) => {
         if (index % max === 0) {
@@ -176,8 +195,9 @@ const createCommentPositions = (canvas, comments, page = 0) => {
                 canvas.width +
                 (index + page * 100) * (canvas.width / comments.length),
             y:
-                randomNumbers[index % max] * fontSize * inputFontSize -
-                fontSize * inputFontSize,
+                (randomNumbers[index % max] * fontSize * options.fontSize) /
+                    10 -
+                (fontSize * options.fontSize) / 10,
             random: Math.random() * 0.2,
             fontSize: fontSize,
             time:
@@ -202,7 +222,8 @@ const updateTextPositionsBasedOnTime = (video, comments) =>
             ...comment,
             x:
                 (video.getBoundingClientRect().width - timeOffset) *
-                    (speed * inputSpeed + !speedSync * comment.random) +
+                    ((speed * options.speed) / 10 +
+                        !options.speedSync * comment.random) +
                 (comment.time === null
                     ? 0
                     : video.getBoundingClientRect().width),
@@ -213,9 +234,9 @@ const updateTextPositionsBasedOnTime = (video, comments) =>
 //댓글 렌더링
 const renderComments = (ctx, comments) =>
     comments.forEach((comment) => {
-        ctx.font = `${comment.fontSize * inputFontSize}px Arial`;
-        ctx.fillStyle = "black";
-        ctx.shadowColor = "white";
+        ctx.font = `${(comment.fontSize * options.fontSize) / 10}px Arial`;
+        ctx.fillStyle = options.fontColor;
+        ctx.shadowColor = options.backgroundColor;
         ctx.shadowBlur = 4;
         ctx.fillText(comment.text, comment.x, comment.y);
     });
@@ -327,14 +348,8 @@ setupUrlChangeListener();
 
 //popup 이벤트리스너
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "speedChange") {
-        inputSpeed = message.data / 10;
-    }
-    if (message.type === "fontSizeChange") {
-        inputFontSize = message.data / 10;
-    }
-    if (message.type === "speedSyncChange") {
-        speedSync = message.data;
+    if (message.type === "optionChange") {
+        options = message.data;
     }
 });
 

@@ -66,6 +66,12 @@
                 cursor: pointer;
                 border-radius: 50%;
             }
+            #colorInput {
+                width: 60px;
+                height: 30px;
+                border: none;
+                cursor: pointer;
+            }
 
             /* Toggle Button CSS */
             .toggle-container {
@@ -159,6 +165,14 @@
                 value="10"
                 id="fontSizeInput"
             />
+        </div>
+        <div class="control-group">
+            <label for="colorInput">글자색(Font Color)</label>
+            <input type="color" id="fontColorInput" />
+        </div>
+        <div class="control-group">
+            <label for="colorInput">배경색 (Background Color)</label>
+            <input type="color" id="backgroundColorInput" />
         </div>
         <div class="control-group toggle-container">
             <span class="toggle-label">Sync</span>

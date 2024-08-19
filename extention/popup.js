@@ -2,83 +2,96 @@ const speedInput = document.getElementById("speedInput");
 const fontSizeInput = document.getElementById("fontSizeInput");
 const resetButton = document.getElementById("resetButton");
 const speedSyncToggle = document.getElementById("speedSyncToggle");
+const backgroundColorInput = document.getElementById("backgroundColorInput");
+const fontColorInput = document.getElementById("fontColorInput");
 
 const defaultSpeed = 10;
 const defaultFontSize = 10;
 const defaultSyncSpeed = false;
+const defaultFontColor = "#000000";
+const defaultBackgroundColor = "#ffffff";
+
+const defaultOptions = {
+    speed: defaultSpeed,
+    fontSize: defaultFontSize,
+    speedSync: defaultSyncSpeed,
+    fontColor: defaultFontColor,
+    backgroundColor: defaultBackgroundColor,
+};
+let options = null;
 
 // 설정값을 로드하여 슬라이더에 적용
-chrome.storage.sync.get(["speed", "fontSize", "speedSync"], (result) => {
-    speedInput.value = result.speed !== undefined ? result.speed : defaultSpeed;
-    fontSizeInput.value =
-        result.fontSize !== undefined ? result.fontSize : defaultFontSize;
-    speedSyncToggle.checked =
-        result.speedSync !== undefined ? result.speedSync : defaultSyncSpeed;
+chrome.storage.sync.get(["options"], (result) => {
+    options = result.options !== undefined ? result.options : defaultOptions;
+    speedInput.value = options.speed;
+    fontSizeInput.value = options.fontSize;
+    speedSyncToggle.checked = options.speedSync;
+    backgroundColorInput.value = options.backgroundColor;
+    fontColorInput.value = options.fontColor;
     sendMessage({
-        type: "speedChange",
-        data: speedInput.value,
-    });
-    sendMessage({
-        type: "fontSizeChange",
-        data: fontSizeInput.value,
-    });
-    sendMessage({
-        type: "speedSyncChange",
-        data: speedSyncToggle.checked,
+        type: "optionChange",
+        data: options,
     });
 });
 
 // 슬라이더 값 변경 시 메시지 전송 및 저장
 speedInput.addEventListener("input", (e) => {
-    const speedValue = e.target.value;
-    chrome.storage.sync.set({ speed: speedValue });
+    options.speed = e.target.value;
+    chrome.storage.sync.set({ options: options });
     sendMessage({
-        type: "speedChange",
-        data: speedValue,
+        type: "optionChange",
+        data: options,
     });
 });
 
 fontSizeInput.addEventListener("input", (e) => {
-    const fontSizeValue = e.target.value;
-    chrome.storage.sync.set({ fontSize: fontSizeValue });
+    options.fontSize = e.target.value;
+    chrome.storage.sync.set({ options: options });
     sendMessage({
-        type: "fontSizeChange",
-        data: fontSizeValue,
+        type: "optionChange",
+        data: options,
     });
 });
 speedSyncToggle.addEventListener("input", (e) => {
-    const speedSyncValue = e.target.checked;
-    chrome.storage.sync.set({ speedSync: speedSyncValue });
+    options.speedSync = e.target.checked;
+    chrome.storage.sync.set({ options: options });
     sendMessage({
-        type: "speedSyncChange",
-        data: speedSyncValue,
+        type: "optionChange",
+        data: options,
+    });
+});
+//글자 색상
+backgroundColorInput.addEventListener("input", function (e) {
+    options.backgroundColor = e.target.value;
+    chrome.storage.sync.set({ options: options });
+    sendMessage({
+        type: "optionChange",
+        data: options,
     });
 });
 
+fontColorInput.addEventListener("input", function (e) {
+    options.fontColor = e.target.value;
+    chrome.storage.sync.set({ options: options });
+    sendMessage({
+        type: "optionChange",
+        data: options,
+    });
+});
 // 초기화 버튼 클릭 시 슬라이더 값 초기화 및 저장
 resetButton.addEventListener("click", () => {
-    speedInput.value = defaultSpeed;
-    fontSizeInput.value = defaultFontSize;
-    speedSyncToggle.checked = defaultSyncSpeed;
+    speedInput.value = defaultOptions.speed;
+    fontSizeInput.value = defaultOptions.fontSize;
+    speedSyncToggle.checked = defaultOptions.speedSync;
+    fontColorInput.value = defaultOptions.fontColor;
+    backgroundColorInput.value = defaultOptions.backgroundColor;
 
     chrome.storage.sync.set({
-        speed: defaultSpeed,
-        fontSize: defaultFontSize,
-        speedSync: defaultSyncSpeed,
-    });
-
-    sendMessage({
-        type: "speedChange",
-        data: defaultSpeed,
+        options: defaultOptions,
     });
     sendMessage({
-        type: "fontSizeChange",
-        data: defaultFontSize,
-    });
-
-    sendMessage({
-        type: "speedSyncChange",
-        data: defaultSyncSpeed,
+        type: "optionChange",
+        data: defaultOptions,
     });
 });
 
