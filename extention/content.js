@@ -8,6 +8,7 @@ let options = {
     speedSync: false,
     fontColor: "#000000",
     backgroundColor: "#ffffff",
+    maxCommentLength: 100,
 };
 let nextPageToken = null;
 
@@ -195,7 +196,12 @@ const fetchComments = async (videoId, nextPageToken) => {
             body: JSON.stringify(params),
         }
     );
-    return response.json();
+    const data = await response.json();
+    // 댓글 길이 필터링 적용
+    data.items = data.items.filter(item => 
+        item.snippet.topLevelComment.snippet.textOriginal.length <= options.maxCommentLength
+    );
+    return data;
 };
 
 (function addButton() {

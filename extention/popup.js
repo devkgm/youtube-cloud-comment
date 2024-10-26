@@ -4,12 +4,15 @@ const resetButton = document.getElementById("resetButton");
 const speedSyncToggle = document.getElementById("speedSyncToggle");
 const backgroundColorInput = document.getElementById("backgroundColorInput");
 const fontColorInput = document.getElementById("fontColorInput");
+const maxCommentLengthInput = document.getElementById("maxCommentLengthInput");
+const maxCommentLengthValue = document.getElementById("maxCommentLengthValue");
 
 const defaultSpeed = 10;
 const defaultFontSize = 10;
 const defaultSyncSpeed = false;
 const defaultFontColor = "#000000";
 const defaultBackgroundColor = "#ffffff";
+const defaultMaxCommentLength = 100;
 
 const defaultOptions = {
     speed: defaultSpeed,
@@ -17,6 +20,7 @@ const defaultOptions = {
     speedSync: defaultSyncSpeed,
     fontColor: defaultFontColor,
     backgroundColor: defaultBackgroundColor,
+    maxCommentLength: defaultMaxCommentLength,
 };
 let options = null;
 
@@ -28,6 +32,8 @@ chrome.storage.sync.get(["options"], (result) => {
     speedSyncToggle.checked = options.speedSync;
     backgroundColorInput.value = options.backgroundColor;
     fontColorInput.value = options.fontColor;
+    maxCommentLengthInput.value = options.maxCommentLength;
+    maxCommentLengthValue.textContent = options.maxCommentLength;
     sendMessage({
         type: "optionChange",
         data: options,
@@ -78,6 +84,18 @@ fontColorInput.addEventListener("input", function (e) {
         data: options,
     });
 });
+
+// 최대 댓글 길이 슬라이더 이벤트 리스너
+maxCommentLengthInput.addEventListener("input", (e) => {
+    options.maxCommentLength = parseInt(e.target.value);
+    maxCommentLengthValue.textContent = options.maxCommentLength;
+    chrome.storage.sync.set({ options: options });
+    sendMessage({
+        type: "optionChange",
+        data: options,
+    });
+});
+
 // 초기화 버튼 클릭 시 슬라이더 값 초기화 및 저장
 resetButton.addEventListener("click", () => {
     speedInput.value = defaultOptions.speed;
@@ -85,6 +103,8 @@ resetButton.addEventListener("click", () => {
     speedSyncToggle.checked = defaultOptions.speedSync;
     fontColorInput.value = defaultOptions.fontColor;
     backgroundColorInput.value = defaultOptions.backgroundColor;
+    maxCommentLengthInput.value = defaultOptions.maxCommentLength;
+    maxCommentLengthValue.textContent = defaultOptions.maxCommentLength;
 
     chrome.storage.sync.set({
         options: defaultOptions,
