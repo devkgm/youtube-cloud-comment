@@ -32,10 +32,10 @@ const logic = async () => {
     const videoId = extractVideoId(window.location.href);
     if (!videoId) return;
 
-    const data = await fetchComments(videoId);
-    nextPageToken = data.nextPageToken;
-    const comments = data.items.map(item => item.snippet.topLevelComment.snippet.textOriginal);
-    let commentPositions = createCommentPositions(canvas, comments);
+    let commentPositions = [];
+    fetchCommentsAsync(videoId).then(initialComments => {
+        commentPositions = createCommentPositions(canvas, initialComments);
+    });
 
     const handleSizeChange = () => {
         commentPositions = handleVideoSizeChanges(canvas, video, commentPositions);
@@ -60,19 +60,16 @@ const logic = async () => {
 
             if (video.currentTime + 5 > DURATION_PER_COMMENT * commentPositions.length && nextPageToken && !isLoading) {
                 isLoading = true;
-                try {
-                    const newData = await fetchComments(currentVideoId, nextPageToken);
-                    nextPageToken = newData.nextPageToken;
-                    const newComments = newData.items.map(item => item.snippet.topLevelComment.snippet.textOriginal);
+                fetchCommentsAsync(currentVideoId, nextPageToken).then(newComments => {
                     commentPositions = [
                         ...commentPositions,
                         ...createCommentPositions(canvas, newComments, commentPositions.length / 100)
                     ];
-                } catch (error) {
-                    console.error("댓글 불러오기 오류:", error);
-                } finally {
                     isLoading = false;
-                }
+                }).catch(error => {
+                    console.error("댓글 불러오기 오류:", error);
+                    isLoading = false;
+                });
             }
         }
 
@@ -180,28 +177,32 @@ const extractVideoId = (url) => {
     return match ? match[1] : null;
 };
 
-const fetchComments = async (videoId, nextPageToken) => {
+const fetchCommentsAsync = async (videoId, pageToken = null) => {
     const params = {
         part: "snippet",
         videoId,
         maxResults: 100,
         order: "relevance",
     };
-    if (nextPageToken) params.pageToken = nextPageToken;
-    const response = await fetch(
-        "https://cm3zyqdaz6.execute-api.ap-northeast-2.amazonaws.com/v1/comments",
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(params),
-        }
-    );
-    const data = await response.json();
-    // 댓글 길이 필터링 적용
-    data.items = data.items.filter(item => 
-        item.snippet.topLevelComment.snippet.textOriginal.length <= options.maxCommentLength
-    );
-    return data;
+    if (pageToken) params.pageToken = pageToken;
+    try {
+        const response = await fetch(
+            "https://cm3zyqdaz6.execute-api.ap-northeast-2.amazonaws.com/v1/comments",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(params),
+            }
+        );
+        const data = await response.json();
+        nextPageToken = data.nextPageToken;
+        return data.items
+            .filter(item => item.snippet.topLevelComment.snippet.textOriginal.length <= options.maxCommentLength)
+            .map(item => item.snippet.topLevelComment.snippet.textOriginal);
+    } catch (error) {
+        console.error("댓글 불러오기 오류:", error);
+        return [];
+    }
 };
 
 (function addButton() {
